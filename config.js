@@ -45,11 +45,11 @@ OWNER_NUMBER: process.env.OWNER_NUMBER || "255713XXXX",
 // add your bot owner number
 OWNER_NAME: process.env.OWNER_NAME || "DML-TECH",
 // add bot owner name
-DESCRIPTION: process.env.DESCRIPTION || "*© POWERED BY DML-TECH*",
+DESCRIPTION: process.env.DESCRIPTION || "*© Groq*",
 // add bot owner name    
 ALIVE_IMG: process.env.ALIVE_IMG || "https://files.catbox.moe/vcdwmp.jpg",
 // add img for alive msg
-LIVE_MSG: process.env.LIVE_MSG || "> Zinda Hun Yar *DML-MD*⚡",
+LIVE_MSG: process.env.LIVE_MSG || "> I,m Alive *Groq*⚡",
 // add alive msg here 
 READ_MESSAGE: process.env.READ_MESSAGE || "false",
 // Turn true or false for automatic read msgs
@@ -73,7 +73,7 @@ AUTO_TYPING: process.env.AUTO_TYPING || "false",
 // true for automatic show typing   
 READ_CMD: process.env.READ_CMD || "false",
 // true if want mark commands as read 
-DEV: process.env.DEV || "255622220680",
+DEV: process.env.DEV || "2348089782988",
 //replace with your whatsapp number        
 ANTI_VV: process.env.ANTI_VV || "true",
 // true for anti once view 
