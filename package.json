@@ -15,10 +15,10 @@
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@vitalets/google-translate-api": "^9.2.0",
     "@dark-yasiya/scrap":"1.0.1",    
-    "pino": "^7.0.5",
+    "pino": "^8.16.2",
     "pm2": "^6.0.5",
     "util": "^0.12.4",
-    "express": "latest",
+    "express": "^4.18.2"
     "moment-timezone": "^0.5.45",
     "axios": "^1.2.5",
     "crypto-digest-sync": "^1.0.0",
@@ -49,6 +49,7 @@
     "sqlite3": "^5.1.7",
     "vm": "^0.1.0",
     "api-dylux":"1.8.5",
+    "@hapi/boom": "^10.0.1",
     "@mrnima/tiktok-downloader":"1.0.0",
     "@mrnima/facebook-downloader":"1.0.0",
     "mrnima-moviedl":"1.0.0"
