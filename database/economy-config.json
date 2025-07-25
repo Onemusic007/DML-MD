@@ -1,0 +1,39 @@
+{
+  "attendanceReward": 500,
+  "robCooldown": 3600000,
+  "gambleCooldown": 300000,
+  "interestRate": 0.02,
+  "taxRate": 0.05,
+  "store": {
+    "shield": {
+      "name": "🛡️ Shield",
+      "price": 1200,
+      "description": "Protects from one robbery"
+    },
+    "gun": {
+      "name": "🔫 Gun",
+      "price": 1500,
+      "description": "Use to rob others"
+    },
+    "lucky_charm": {
+      "name": "🍀 Lucky Charm",
+      "price": 1000,
+      "description": "Chance to double your earnings"
+    },
+    "vip_badge": {
+      "name": "💎 VIP Badge",
+      "price": 5000,
+      "description": "Unlock special privileges"
+    },
+    "tracker": {
+      "name": "🛰️ Tracker",
+      "price": 800,
+      "description": "Track rob attempts"
+    },
+    "vault_upgrade": {
+      "name": "💰 Vault Upgrade",
+      "price": 2000,
+      "description": "Increase your bank limit"
+    }
+  }
+}

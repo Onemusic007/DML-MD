@@ -1,0 +1,21 @@
+{
+  "12026411790542@lid": {
+    "balance": 310,
+    "bank": 0,
+    "lastAttendance": "2025-07-25",
+    "inventory": [],
+    "clan": null,
+    "bounty": 0,
+    "rank": "Newbie",
+    "shares": {
+      "bmw": {
+        "quantity": 1,
+        "boughtAt": 190,
+        "totalInvested": 190,
+        "lockedUntil": "2025-07-27",
+        "dateBought": "2025-07-25",
+        "duration": 2
+      }
+    }
+  }
+}

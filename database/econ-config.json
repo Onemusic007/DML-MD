@@ -1,0 +1,18 @@
+{
+  "isAdmin": [
+    "12026411790542@lid",
+    "2348111637463@s.whatsapp.net"
+  ],
+  "groupConfigs": {
+    "120987654321-123456@g.us": {
+      "groupAdmins": [
+        "2348098765432@s.whatsapp.net"
+      ],
+      "settings": {
+        "attendanceReward": 150,
+        "robEnabled": true,
+        "storeEnabled": true
+      }
+    }
+  }
+}

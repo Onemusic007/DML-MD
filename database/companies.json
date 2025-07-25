@@ -1,0 +1,128 @@
+{
+  "apple": {
+    "price": 250,
+    "roiRange": [
+      0.95,
+      1.2
+    ],
+    "description": "Tech giant known for iPhones, Macs, and innovation",
+    "rarity": "Stable"
+  },
+  "google": {
+    "price": 220,
+    "roiRange": [
+      0.9,
+      1.3
+    ],
+    "description": "Search engine king and AI powerhouse",
+    "rarity": "Stable"
+  },
+  "meta": {
+    "price": 180,
+    "roiRange": [
+      0.85,
+      1.5
+    ],
+    "description": "Social media leader with MetaVerse focus",
+    "rarity": "Medium"
+  },
+  "tesla": {
+    "price": 300,
+    "roiRange": [
+      0.7,
+      1.6
+    ],
+    "description": "Electric vehicles and AI",
+    "rarity": "High Risk"
+  },
+  "samsung": {
+    "price": 210,
+    "roiRange": [
+      0.9,
+      1.25
+    ],
+    "description": "Tech and electronics giant",
+    "rarity": "Stable"
+  },
+  "cocacola": {
+    "price": 140,
+    "roiRange": [
+      0.98,
+      1.1
+    ],
+    "description": "Famous beverage company",
+    "rarity": "Very Stable"
+  },
+  "amazon": {
+    "price": 270,
+    "roiRange": [
+      0.9,
+      1.3
+    ],
+    "description": "E-commerce and cloud leader",
+    "rarity": "Medium"
+  },
+  "microsoft": {
+    "price": 260,
+    "roiRange": [
+      0.95,
+      1.2
+    ],
+    "description": "Enterprise software and AI",
+    "rarity": "Stable"
+  },
+  "netflix": {
+    "price": 160,
+    "roiRange": [
+      0.8,
+      1.4
+    ],
+    "description": "Streaming content provider",
+    "rarity": "High Risk"
+  },
+  "nvidia": {
+    "price": 350,
+    "roiRange": [
+      0.85,
+      1.5
+    ],
+    "description": "Graphics and AI chip leader",
+    "rarity": "Medium"
+  },
+  "huawei": {
+    "price": 200,
+    "roiRange": [
+      0.9,
+      1.3
+    ],
+    "description": "Telecom and electronics",
+    "rarity": "Medium"
+  },
+  "bmw": {
+    "price": 190,
+    "roiRange": [
+      0.88,
+      1.25
+    ],
+    "description": "Luxury automobiles",
+    "rarity": "Stable"
+  },
+  "disney": {
+    "price": 175,
+    "roiRange": [
+      0.9,
+      1.15
+    ],
+    "description": "Entertainment and media",
+    "rarity": "Stable"
+  },
+  "sony": {
+    "price": 185,
+    "roiRange": [
+      0.9,
+      1.3
+    ],
+    "description": "Consumer electronics and entertainment",
+    "rarity": "Medium"
+  }
+}
