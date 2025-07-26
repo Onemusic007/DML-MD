@@ -7,18 +7,32 @@ const path = require('path');
 // =======================
 function isConnectionReady(conn) {
   try {
-    if (!conn || !conn.ws) {
-      console.log('Connection or WebSocket not available');
+    if (!conn) {
+      console.log('Connection not available');
       return false;
     }
     
-    // Check WebSocket ready state (1 = OPEN)
-    if (conn.ws.readyState !== 1) {
-      console.log(`WebSocket not ready. State: ${conn.ws.readyState}`);
+    // Check if WebSocket exists and is open
+    if (!conn.ws) {
+      console.log('WebSocket not available');
       return false;
     }
     
-    return true;
+    // WebSocket ready states: 0=CONNECTING, 1=OPEN, 2=CLOSING, 3=CLOSED
+    const wsState = conn.ws.readyState;
+    if (wsState === undefined || wsState !== 1) {
+      console.log(`WebSocket not ready. State: ${wsState}`);
+      return false;
+    }
+    
+    // Additional check for connection state
+    if (conn.user && conn.user.id) {
+      return true;
+    } else {
+      console.log('Connection authenticated but user not set');
+      return false;
+    }
+    
   } catch (error) {
     console.log('Error checking connection state:', error);
     return false;
