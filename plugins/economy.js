@@ -97,39 +97,6 @@ cmd({ pattern: "withdraw", desc: "Withdraw money from bank" }, async (conn, m, s
 });
 
 // =======================
-// 📝 ATTENDANCE DETECTOR
-// =======================
-const attendanceRegex = /[*_]Name[:*]\s*[\s\S]*?[*_]Relationship[:*]/i;
-
-cmd({ on: 'body' }, async (conn, m, store, { from, sender, body, reply }) => {
-  try {
-    if (!attendanceRegex.test(body)) return;
-
-    const userId = sender;
-    const today = new Date().toISOString().split('T')[0];
-
-    initUser(userId);
-
-    if (eco[userId].lastAttendance === today) {
-      return reply(`📝 You've already been rewarded today for attendance.`);
-    }
-
-    const rewardAmount = 500;
-    eco[userId].balance += rewardAmount;
-    eco[userId].lastAttendance = today;
-    saveEco();
-
-    await conn.sendMessage(from, {
-      text: `✅ Attendance recorded successfully!\n💸 You’ve received ₦${rewardAmount.toLocaleString()} for today.\n\n🧾 *Keep it up!*`,
-      mentions: [sender]
-    });
-  } catch (err) {
-    console.error('Attendance error:', err);
-    reply(`❌ Error processing attendance reward.`);
-  }
-});
-
-// =======================
 // 🦹 ROB COMMAND
 // =======================
 const robCooldown = {}; // In-memory cooldown tracker
