@@ -116,8 +116,35 @@ const {
       console.error('Unhandled Rejection at:', promise, 'reason:', reason);
   });
 
+  // Add cleanup function
+  const cleanup = () => {
+      if (conn) {
+          try {
+              conn.ws?.close();
+              conn.end();
+          } catch (error) {
+              console.log('Error during cleanup:', error);
+          }
+      }
+  };
+
+  // Handle process termination
+  process.on('SIGINT', () => {
+      console.log('Received SIGINT, cleaning up...');
+      cleanup();
+      process.exit(0);
+  });
+
+  process.on('SIGTERM', () => {
+      console.log('Received SIGTERM, cleaning up...');
+      cleanup();
+      process.exit(0);
+  });
+
   let conn;
   let isConnecting = false;
+  let reconnectAttempts = 0;
+  const maxReconnectAttempts = 3;
 
   //=============================================
 
@@ -138,11 +165,20 @@ const {
               logger: P({ level: 'silent' }),
               printQRInTerminal: false,
               browser: Browsers.macOS("Firefox"),
-              syncFullHistory: false, // Changed to false for better performance
-              auth: state,
+              syncFullHistory: false,
+              auth: {
+                  ...state,
+                  creds: {
+                      ...state.creds,
+                      me: state.creds?.me || undefined
+                  }
+              },
               version,
               markOnlineOnConnect: true,
               generateHighQualityLinkPreview: true,
+              connectTimeoutMs: 60000,
+              defaultQueryTimeoutMs: 0,
+              keepAliveIntervalMs: 10000,
               getMessage: async (key) => {
                   if (global.store) {
                       const msg = await global.store.loadMessage(key.remoteJid, key.id);
@@ -150,11 +186,12 @@ const {
                   }
                   return proto.Message.fromObject({});
               },
-              // Add these options to prevent cache issues
               shouldSyncHistoryMessage: () => false,
               emitOwnEvents: true,
               fireInitQueries: true,
-              defaultQueryTimeoutMs: 60000,
+              retryRequestDelayMs: 250,
+              maxMsgRetryCount: 5,
+              qrTimeout: 40000
           });
 
           // Initialize store - moved outside and made global
@@ -182,13 +219,37 @@ const {
                   const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
                   console.log('Connection closed due to', lastDisconnect?.error, ', reconnecting', shouldReconnect);
                   
-                  if (shouldReconnect) {
+                  // Handle conflict error specifically
+                  if (lastDisconnect?.error?.output?.statusCode === 440) {
+                      console.log('Stream conflict detected - waiting longer before reconnect...');
+                      reconnectAttempts++;
+                      
+                      if (reconnectAttempts >= maxReconnectAttempts) {
+                          console.log('Max reconnect attempts reached. Stopping reconnection.');
+                          return;
+                      }
+                      
+                      // Wait longer for conflict resolution
                       setTimeout(() => {
                           connectToWA();
-                      }, 5000); // Wait 5 seconds before reconnecting
+                      }, 30000); // Wait 30 seconds
+                      return;
+                  }
+                  
+                  if (shouldReconnect) {
+                      reconnectAttempts++;
+                      if (reconnectAttempts >= maxReconnectAttempts) {
+                          console.log('Max reconnect attempts reached. Stopping reconnection.');
+                          return;
+                      }
+                      
+                      setTimeout(() => {
+                          connectToWA();
+                      }, 10000); // Wait 10 seconds for normal reconnects
                   }
               } else if (connection === 'open') {
                   isConnecting = false;
+                  reconnectAttempts = 0; // Reset counter on successful connection
                   console.log('🧬 Installing Plugins');
                   
                   try {
