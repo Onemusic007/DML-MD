@@ -9,6 +9,9 @@
     "restart": "pm2 restart Groq"
   },
   "dependencies": {
+    "mysql2": "^3.6.0",
+    "dotenv": "^16.3.1"
+    // ... your other dependencies
     "@whiskeysockets/baileys": "6.7.18",
     "@adiwajshing/keyed-db": "^0.2.4",
     "@dark-yasiya/yt-dl.js": "1.0.5",
