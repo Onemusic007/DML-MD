@@ -174,11 +174,11 @@ const {
                   }
               },
               version,
-              markOnlineOnConnect: true,
-              generateHighQualityLinkPreview: true,
-              connectTimeoutMs: 60000,
-              defaultQueryTimeoutMs: 0,
-              keepAliveIntervalMs: 10000,
+              markOnlineOnConnect: false, // Changed to false to prevent auto-marking online
+              generateHighQualityLinkPreview: false, // Disabled for better performance
+              connectTimeoutMs: 90000, // Increased timeout
+              defaultQueryTimeoutMs: 30000, // Set reasonable timeout
+              keepAliveIntervalMs: 30000, // Increased keep-alive interval
               getMessage: async (key) => {
                   if (global.store) {
                       const msg = await global.store.loadMessage(key.remoteJid, key.id);
@@ -188,10 +188,21 @@ const {
               },
               shouldSyncHistoryMessage: () => false,
               emitOwnEvents: true,
-              fireInitQueries: true,
-              retryRequestDelayMs: 250,
-              maxMsgRetryCount: 5,
-              qrTimeout: 40000
+              fireInitQueries: false, // Disabled to reduce initial load
+              retryRequestDelayMs: 1000, // Increased delay
+              maxMsgRetryCount: 3, // Reduced retry count
+              qrTimeout: 60000, // Increased QR timeout
+              // Add these options for better stability
+              transactionOpts: {
+                  maxCommitRetries: 5,
+                  delayBetweenTriesMs: 3000,
+              },
+              options: {
+                  chats: { limit: 25 },
+                  history: {
+                      count: 0
+                  }
+              }
           });
 
           // Initialize store - moved outside and made global
@@ -219,8 +230,10 @@ const {
                   const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
                   console.log('Connection closed due to', lastDisconnect?.error, ', reconnecting', shouldReconnect);
                   
-                  // Handle conflict error specifically
-                  if (lastDisconnect?.error?.output?.statusCode === 440) {
+                  // Handle different error types
+                  const statusCode = lastDisconnect?.error?.output?.statusCode;
+                  
+                  if (statusCode === 440) {
                       console.log('Stream conflict detected - waiting longer before reconnect...');
                       reconnectAttempts++;
                       
@@ -229,10 +242,24 @@ const {
                           return;
                       }
                       
-                      // Wait longer for conflict resolution
                       setTimeout(() => {
                           connectToWA();
                       }, 30000); // Wait 30 seconds
+                      return;
+                  }
+                  
+                  if (statusCode === 408) {
+                      console.log('Connection timeout detected - reconnecting...');
+                      reconnectAttempts++;
+                      
+                      if (reconnectAttempts >= maxReconnectAttempts) {
+                          console.log('Max reconnect attempts reached. Stopping reconnection.');
+                          return;
+                      }
+                      
+                      setTimeout(() => {
+                          connectToWA();
+                      }, 15000); // Wait 15 seconds for timeout
                       return;
                   }
                   
@@ -283,10 +310,15 @@ const {
 │    https://github.com/MLILA17/DML-MD  
 ╰─🚀 *Powered by Alex Macksyn*`;
                       
-                      conn.sendMessage(conn.user.id, { 
-                          image: { url: `https://files.catbox.moe/vcdwmp.jpg` }, 
-                          caption: up 
-                      }).catch(console.error);
+                      // Add connection check before sending
+                      if (conn && conn.user && conn.user.id) {
+                          conn.sendMessage(conn.user.id, { 
+                              image: { url: `https://files.catbox.moe/vcdwmp.jpg` }, 
+                              caption: up 
+                          }).catch(error => {
+                              console.error('Error sending startup message:', error);
+                          });
+                      }
                   } catch (error) {
                       console.error('Error in connection open handler:', error);
                   }
@@ -397,7 +429,14 @@ const {
                   const isReact = m.message.reactionMessage ? true : false;
                   
                   const reply = (teks) => {
-                      conn.sendMessage(from, { text: teks }, { quoted: mek });
+                      // Check if connection is still active before sending
+                      if (conn && conn.user && conn.ws && conn.ws.readyState === conn.ws.OPEN) {
+                          conn.sendMessage(from, { text: teks }, { quoted: mek }).catch(error => {
+                              console.error('Error sending reply:', error);
+                          });
+                      } else {
+                          console.log('Connection not ready, skipping reply');
+                      }
                   }
 
                   const udp = botNumber.split('@')[0];
@@ -439,7 +478,7 @@ const {
                   }
 
                   // Auto React for all messages (public and owner)
-                  if (!isReact && config.AUTO_REACT === 'true') {
+                  if (!isReact && config.AUTO_REACT === 'true' && conn && conn.user && conn.ws && conn.ws.readyState === conn.ws.OPEN) {
                       const reactions = [
                           '🌼', '❤️', '💐', '🔥', '🏵️', '❄️', '🧊', '🐳', '💥', '🥀', '❤‍🔥', '🥹', '😩', '🫣', 
                           '🤭', '👻', '👾', '🫶', '😻', '🙌', '🫂', '🫀', '👩‍🦰', '🧑‍🦰', '👩‍⚕️', '🧑‍⚕️', '🧕', 
@@ -459,14 +498,18 @@ const {
                       ];
 
                       const randomReaction = reactions[Math.floor(Math.random() * reactions.length)];
-                      m.react(randomReaction);
+                      m.react(randomReaction).catch(error => {
+                          console.error('Error sending reaction:', error);
+                      });
                   }
 
                   // Custom React for all messages (public and owner)
-                  if (!isReact && config.CUSTOM_REACT === 'true') {
+                  if (!isReact && config.CUSTOM_REACT === 'true' && conn && conn.user && conn.ws && conn.ws.readyState === conn.ws.OPEN) {
                       const reactions = (config.CUSTOM_REACT_EMOJIS || '🥲,😂,👍🏻,🙂,😔').split(',');
                       const randomReaction = reactions[Math.floor(Math.random() * reactions.length)];
-                      m.react(randomReaction);
+                      m.react(randomReaction).catch(error => {
+                          console.error('Error sending custom reaction:', error);
+                      });
                   }
 
                   // ban users 
