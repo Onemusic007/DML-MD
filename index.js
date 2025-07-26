@@ -144,8 +144,8 @@ const {
               markOnlineOnConnect: true,
               generateHighQualityLinkPreview: true,
               getMessage: async (key) => {
-                  if (store) {
-                      const msg = await store.loadMessage(key.remoteJid, key.id);
+                  if (global.store) {
+                      const msg = await global.store.loadMessage(key.remoteJid, key.id);
                       return msg?.message || undefined;
                   }
                   return proto.Message.fromObject({});
@@ -157,9 +157,18 @@ const {
               defaultQueryTimeoutMs: 60000,
           });
 
-          // Initialize store
-          const store = makeInMemoryStore({ logger: P().child({ level: 'silent', stream: 'store' }) });
-          store?.bind(conn.ev);
+          // Initialize store - moved outside and made global
+          if (!global.store) {
+              try {
+                  global.store = makeInMemoryStore({ logger: P().child({ level: 'silent', stream: 'store' }) });
+              } catch (error) {
+                  console.log('makeInMemoryStore not available, using fallback');
+                  global.store = null;
+              }
+          }
+          if (global.store) {
+              global.store.bind(conn.ev);
+          }
 
           conn.ev.on('connection.update', (update) => {
               const { connection, lastDisconnect, qr } = update;
@@ -726,15 +735,13 @@ const {
               let v;
               if (id.endsWith('@g.us'))
                   return new Promise(async resolve => {
-                      v = store.contacts[id] || {};
+                      v = global.store?.contacts?.[id] || {};
                       if (!(v.name || v.subject))
-                          v = conn.groupMetadata(id) || {};
+                          v = await conn.groupMetadata(id).catch(() => ({})) || {};
                       resolve(
                           v.name ||
                               v.subject ||
-                              PhoneNumber(
-                                  '+' + id.replace('@s.whatsapp.net', ''),
-                              ).getNumber('international'),
+                              id.replace('@g.us', '')
                       );
                   });
               else
@@ -746,14 +753,12 @@ const {
                             }
                           : id === conn.decodeJid(conn.user.id)
                           ? conn.user
-                          : store.contacts[id] || {};
+                          : global.store?.contacts?.[id] || {};
               return (
                   (withoutContact ? '' : v.name) ||
                   v.subject ||
                   v.verifiedName ||
-                  PhoneNumber(
-                      '+' + jid.replace('@s.whatsapp.net', ''),
-                  ).getNumber('international')
+                  id.replace('@s.whatsapp.net', '')
               );
           };
 
@@ -807,7 +812,7 @@ const {
               return status;
           };
 
-          conn.serializeM = mek => sms(conn, mek, store);
+          conn.serializeM = mek => sms(conn, mek, global.store);
 
       } catch (error) {
           isConnecting = false;
