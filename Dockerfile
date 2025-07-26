@@ -7,19 +7,14 @@ RUN git clone https://github.com/Onemusic007/DML-MD.git Groq
 WORKDIR /Groq
 
 # Install dependencies
-RUN npm install && npm install -g pm2 || yarn install --network-concurrency 1
+RUN npm install -g pm2 && npm install || yarn install --network-concurrency 1
 
 RUN npm install mongoose dotenv
 
 # Copy additional files (optional – often not needed after cloning repo)
 COPY . .
 
-# Expose port
-EXPOSE 9090
+# Keep a dummy server alive for Koyeb health check
+EXPOSE 3000
 
-# Start the app
-CMD ["npm", "start"]
-
-# Add health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8000/health || exit 1
+CMD ["pm2-runtime", "index.js"]
