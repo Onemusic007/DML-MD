@@ -7,7 +7,7 @@ RUN git clone https://github.com/Onemusic007/DML-MD.git Groq
 WORKDIR /Groq
 
 # Install dependencies
-RUN npm install -g pm2 && npm install || yarn install --network-concurrency 1
+RUN npm install -g pm2 && || yarn install --network-concurrency 1
 
 RUN npm install mongoose dotenv
 
