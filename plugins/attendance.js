@@ -3,35 +3,36 @@ const fs = require('fs');
 const path = require('path');
 
 // =======================
-// 🔌 CONNECTION STATE HELPER
+// 🔌 CONNECTION STATE HELPER (IMPROVED)
 // =======================
 function isConnectionReady(conn) {
   try {
     if (!conn) {
-      console.log('Connection not available');
-      return false;
+      return false; // Remove console.log to reduce spam
     }
     
     // Check if WebSocket exists and is open
     if (!conn.ws) {
-      console.log('WebSocket not available');
-      return false;
+      return false; // Remove console.log to reduce spam
     }
     
     // WebSocket ready states: 0=CONNECTING, 1=OPEN, 2=CLOSING, 3=CLOSED
     const wsState = conn.ws.readyState;
-    if (wsState === undefined || wsState !== 1) {
-      console.log(`WebSocket not ready. State: ${wsState}`);
-      return false;
+    if (wsState === undefined) {
+      return false; // Remove console.log to reduce spam
+    }
+    
+    // Check if WebSocket is in OPEN state (1)
+    if (wsState !== 1) {
+      return false; // Remove console.log to reduce spam
     }
     
     // Additional check for connection state
-    if (conn.user && conn.user.id) {
-      return true;
-    } else {
-      console.log('Connection authenticated but user not set');
-      return false;
+    if (!conn.user || !conn.user.id) {
+      return false; // Remove console.log to reduce spam
     }
+    
+    return true;
     
   } catch (error) {
     console.log('Error checking connection state:', error);
@@ -40,13 +41,13 @@ function isConnectionReady(conn) {
 }
 
 // Safe reply function that checks connection state
-async function safeReply(conn, reply, message, retries = 3) {
+async function safeReply(conn, reply, message, retries = 2) {
   for (let i = 0; i < retries; i++) {
     try {
       if (!isConnectionReady(conn)) {
-        console.log(`Connection not ready, attempt ${i + 1}/${retries}`);
-        if (i < retries - 1) {
-          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+        if (i === 0) {
+          // Wait a bit on first attempt
+          await new Promise(resolve => setTimeout(resolve, 1000));
           continue;
         }
         return false;
@@ -57,10 +58,9 @@ async function safeReply(conn, reply, message, retries = 3) {
     } catch (error) {
       console.log(`Reply attempt ${i + 1} failed:`, error.message);
       if (i === retries - 1) {
-        console.log('All reply attempts failed');
         return false;
       }
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
   }
   return false;
@@ -70,20 +70,36 @@ async function safeReply(conn, reply, message, retries = 3) {
 // 📝 ATTENDANCE PLUGIN
 // =======================
 
+// Ensure database directory exists
+const databaseDir = path.join(__dirname, '../database');
+if (!fs.existsSync(databaseDir)) {
+  fs.mkdirSync(databaseDir, { recursive: true });
+}
+
 // Path to attendance database
-const attendanceDbPath = path.join(__dirname, '../database/attendance.json');
+const attendanceDbPath = path.join(databaseDir, 'attendance.json');
 
 // Ensure attendance database file exists
 if (!fs.existsSync(attendanceDbPath)) {
   fs.writeFileSync(attendanceDbPath, JSON.stringify({}, null, 2));
 }
 
-// Load attendance data
-let attendanceData = JSON.parse(fs.readFileSync(attendanceDbPath));
+// Load attendance data safely
+let attendanceData = {};
+try {
+  attendanceData = JSON.parse(fs.readFileSync(attendanceDbPath, 'utf8'));
+} catch (error) {
+  console.log('Error loading attendance data, using empty object:', error);
+  attendanceData = {};
+}
 
 // Save attendance data
 const saveAttendance = () => {
-  fs.writeFileSync(attendanceDbPath, JSON.stringify(attendanceData, null, 2));
+  try {
+    fs.writeFileSync(attendanceDbPath, JSON.stringify(attendanceData, null, 2));
+  } catch (error) {
+    console.log('Error saving attendance data:', error);
+  }
 };
 
 // Initialize user attendance record
@@ -106,7 +122,7 @@ try {
   saveEco = economyModule.saveEco;
   initUser = economyModule.initUser;
 } catch (err) {
-  console.log('Economy plugin not found. Attendance will work without rewards.');
+  // Silently continue without economy
 }
 
 // =======================
@@ -143,7 +159,6 @@ async function isGroupAdmin(conn, from, sender) {
 
     return groupAdmins.includes(sender);
   } catch (error) {
-    console.log('Error checking group admin:', error);
     return false;
   }
 }
@@ -196,7 +211,6 @@ function hasImage(m) {
 
     return false;
   } catch (error) {
-    console.log('Error checking for image:', error);
     return false;
   }
 }
@@ -252,8 +266,6 @@ function validateAttendanceForm(body, hasImg = false) {
 
   requiredFields.forEach(field => {
     const match = body.match(field.pattern);
-    console.log(`Checking ${field.name}:`, match ? `"${match[1].trim()}"` : 'not found');
-
     if (!match || !match[1] || match[1].trim() === '' || match[1].trim().length < ATTENDANCE_SETTINGS.minFieldLength) {
       validation.missingFields.push(field.fieldName);
     }
@@ -307,37 +319,35 @@ function updateStreak(userId) {
 }
 
 // =======================
-// 📝 MAIN ATTENDANCE DETECTOR (FIXED)
+// 📝 MAIN ATTENDANCE DETECTOR (IMPROVED)
 // =======================
 cmd({ on: 'body' }, async (conn, m, store, { from, sender, body, reply }) => {
   try {
-    console.log('Checking for GIST HQ attendance form...');
-    
-    // Skip if connection is not ready
+    // Early return if connection is not ready - no logging to reduce spam
     if (!isConnectionReady(conn)) {
-      console.log('Connection not ready for attendance processing');
       return;
     }
     
+    // Quick check for GIST HQ attendance form
     if (!attendanceFormRegex.test(body)) {
       return;
     }
 
-    console.log('✅ Attendance form detected!');
+    // Only log when we actually detect a form and connection is ready
+    console.log('✅ Attendance form detected and connection is ready!');
 
     const userId = sender;
     const today = new Date().toISOString().split('T')[0];
 
     initAttendanceUser(userId);
 
+    // Check if already marked today
     if (attendanceData[userId].lastAttendance === today) {
       await safeReply(conn, reply, `📝 You've already marked your attendance today! Come back tomorrow.`);
       return;
     }
 
     const messageHasImage = hasImage(m);
-    console.log('Image detection result:', messageHasImage);
-
     const validation = validateAttendanceForm(body, messageHasImage);
 
     if (!validation.isValidForm) {
@@ -364,6 +374,7 @@ cmd({ on: 'body' }, async (conn, m, store, { from, sender, body, reply }) => {
       return;
     }
 
+    // Process successful attendance
     const currentStreak = updateStreak(userId);
     attendanceData[userId].lastAttendance = today;
     attendanceData[userId].totalAttendances += 1;
@@ -427,12 +438,11 @@ cmd({ on: 'body' }, async (conn, m, store, { from, sender, body, reply }) => {
 });
 
 // =======================
-// 📊 ATTENDANCE STATS COMMAND (FIXED)
+// 📊 ATTENDANCE STATS COMMAND
 // =======================
 cmd({ pattern: "attendance", desc: "Check your attendance statistics" }, async (conn, m, store, { sender, reply }) => {
   try {
     if (!isConnectionReady(conn)) {
-      console.log('Connection not ready for attendance stats');
       return;
     }
 
@@ -463,12 +473,11 @@ cmd({ pattern: "attendance", desc: "Check your attendance statistics" }, async (
 });
 
 // =======================
-// 🛠️ ATTENDANCE SETTINGS COMMAND (FIXED)
+// 🛠️ ATTENDANCE SETTINGS COMMAND
 // =======================
 cmd({ pattern: "attendancesettings", desc: "Configure attendance settings (admin only)" }, async (conn, m, store, { sender, args, reply, from }) => {
   try {
     if (!isConnectionReady(conn)) {
-      console.log('Connection not ready for attendance settings');
       return;
     }
 
@@ -572,12 +581,11 @@ cmd({ pattern: "attendancesettings", desc: "Configure attendance settings (admin
 });
 
 // =======================
-// 🔧 ADMIN SETUP COMMAND (FIXED)
+// 🔧 ADMIN SETUP COMMAND
 // =======================
 cmd({ pattern: "addadmin", desc: "Add yourself as admin (owner only)" }, async (conn, m, store, { sender, reply }) => {
   try {
     if (!isConnectionReady(conn)) {
-      console.log('Connection not ready for admin setup');
       return;
     }
 
@@ -601,12 +609,11 @@ cmd({ pattern: "addadmin", desc: "Add yourself as admin (owner only)" }, async (
 });
 
 // =======================
-// 🔍 TEST ATTENDANCE FORM (FIXED)
+// 🔍 TEST ATTENDANCE FORM
 // =======================
 cmd({ pattern: "testattendance", desc: "Test attendance form validation" }, async (conn, m, store, { sender, body, reply }) => {
   try {
     if (!isConnectionReady(conn)) {
-      console.log('Connection not ready for test attendance');
       return;
     }
 
@@ -617,7 +624,6 @@ cmd({ pattern: "testattendance", desc: "Test attendance form validation" }, asyn
       return;
     }
 
-    console.log('=== ATTENDANCE TEST DEBUG ===');
     const hasGistHQ = /GIST\s+HQ/i.test(testText);
     const hasNameField = /Name[:*]/i.test(testText);
     const hasRelationshipField = /Relationship[:*]/i.test(testText);
