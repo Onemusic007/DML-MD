@@ -4,6 +4,7 @@
   "description": "A WhatsApp Bot Created By Dml",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "start": "pm2 start index.js --deep-monitoring --attach --name Groq",
     "stop": "pm2 stop Groq",
     "restart": "pm2 restart Groq"
