@@ -9,7 +9,7 @@ WORKDIR /Groq
 # Install dependencies
 RUN npm install && npm install -g pm2 || yarn install --network-concurrency 1
 
-RUN npm install mysql2 dotenv
+RUN npm install mongoose dotenv
 
 # Copy additional files (optional – often not needed after cloning repo)
 COPY . .
