@@ -13,6 +13,12 @@ cmd({
 },
 async (conn, mek, m, { from, sender, reply }) => {
     try {
+        // Check if connection is ready before sending
+        if (!conn || conn.ws?.readyState !== 1) {
+            console.log("Connection not ready, skipping alive command");
+            return;
+        }
+
         const status = `
 ╭─🔴──〔 *🤖 ${config.BOT_NAME} STATUS* 〕───◉
 │✨ *Bot is Active & Online!*
@@ -43,6 +49,13 @@ async (conn, mek, m, { from, sender, reply }) => {
 
     } catch (e) {
         console.error("Alive Error:", e);
-        reply(`An error occurred: ${e.message}`);
+        // Only reply if connection is still active
+        try {
+            if (conn && conn.ws?.readyState === 1) {
+                await reply(`Bot is online but encountered an error: ${e.message}`);
+            }
+        } catch (replyError) {
+            console.error("Failed to send error reply:", replyError.message);
+        }
     }
 });
